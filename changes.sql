@@ -1,6 +1,6 @@
 use TPU_Project
 GO
-
+--03.07.20-----------------------------------
 --Создание таблицы с типами меню
 create table [Типы меню]
 (Menutype VARCHAR(20) not null,
