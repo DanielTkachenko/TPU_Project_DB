@@ -31,7 +31,7 @@ go
 create procedure GetArticlesBrief
 @Offset int, @Count int, @Lang varchar(45)
 as
-select S1.Название, S1.[Время создания], S1.Тематика, S1.[Краткая версия статьи], J1.Наименование
+select S1.[Id статьи], S1.Название, S1.[Время создания], S1.Тематика, S1.[Краткая версия статьи]
 from [Статья] S1 join [Языки] J1 on S1.[ID языка]=J1.[ID языка]
 where J1.Наименование = @Lang
 order by S1.[Время создания] desc
