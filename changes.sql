@@ -14,7 +14,7 @@ go
 --изменение в view UserInfo
 ALTER VIEW UserInfo AS
 SELECT Us.[Id Пользователя], Us.Фамилия, Us.Имя, Us.Отчество, Us.Роль, Us.Пол, Языки.Наименование 'Язык', 
-Em.Наименование 'email', Num.[Номер телефона], Us.Логин, Us.Пароль
+Em.Наименование 'Электронная почта', Num.[Номер телефона], Us.Логин, Us.Пароль
 FROM Пользователь Us INNER JOIN Языки ON Us.[ID языка] = Языки.[ID языка]
 LEFT JOIN [Электронная почта] Em
 ON Us.[Id Пользователя] = Em.[Id Пользователя]
@@ -30,14 +30,11 @@ SELECT @IdLaguage = Языки.[ID языка]
 FROM Языки
 WHERE Языки.Наименование = @Language
 SELECT  @UserId=NEWID()
-INSERT INTO [Номера телефонов] VALUES (NEWID(), @PhoneNumber,@UserId)
+IF @PhoneNumber IS NOT NULL
+BEGIN
+	INSERT INTO [Номера телефонов] VALUES (NEWID(), @PhoneNumber,@UserId)
+END
 INSERT INTO [Электронная почта] VALUES (NEWID(), @Email, @UserId)
 INSERT INTO Пользователь([Id Пользователя], Фамилия, Имя, Отчество, Роль, Пол, [ID языка], Логин, Пароль)
 VALUES(@UserId, @SecondName,@FirstName,@Patronymic,@Role,@Sex,@IdLaguage, @Login, @Password)
 
-go
---Получение юзера по его логину
-CREATE PROCEDURE [GetUserByLogin] @Login varchar(100)
-AS
-SELECT * FROM UserInfo
-WHERE Логин = @Login
