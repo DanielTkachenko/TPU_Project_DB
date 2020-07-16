@@ -1,60 +1,43 @@
 use TPU_Project
 GO
---09.07.20-----------------------------------
---удаляем лишние таблицы
-DROP TABLE [Медиа в статье]
-DROP TABLE [Медиа в странице]
-DROP TABLE [Сссылки в статьях]
-DROP TABLE [Сссылки в страницах]
-DROP TABLE [Сссылка]
-DROP PROCEDURE AddMediaArticle
-DROP PROCEDURE AddMediaPage
-DROP PROCEDURE AddHref
-DROP PROCEDURE AddHrefArticle
-DROP PROCEDURE AddHrefPage
-GO
---создаем новую таблицу
-CREATE TABLE [Статьи пункты меню]
-(
-	[ID пункта меню] uniqueidentifier,
-	[ID статьи] uniqueidentifier,
-	PRIMARY KEY([ID пункта меню], [ID статьи]),
-	FOREIGN KEY([ID пункта меню]) REFERENCES [Пункт меню]([Id пункта меню]),
-	FOREIGN KEY([ID статьи]) REFERENCES [Статья]([Id статьи])
-)
-GO
---корректируем таблицу медиа: убираем колонку Тип, убираем колонку Тема, тип колонки Данные - бинарный
-ALTER TABLE [Медиа]
-ALTER COLUMN [Данные] BINARY NOT NULL
-GO
-ALTER TABLE [Медиа]
-DROP COLUMN [Тип]
-GO
-ALTER TABLE [Медиа]
-DROP COLUMN [Тема]
-GO
---Изменяем ХП добавления Медиа в соответствии с изменениями
-ALTER PROCEDURE [AddMedia]
-@Data binary
+--15.07.20-----------------------------------
+--переделываем лабицу Пользователь
+alter table Пользователь
+add [Логин] varchar(100) not null
+go
+alter table Пользователь
+add [Пароль] varchar(200) not null
+go
+alter table Пользователь
+drop column [Регистрация]
+go
+--изменение в view UserInfo
+ALTER VIEW UserInfo AS
+SELECT Us.[Id Пользователя], Us.Фамилия, Us.Имя, Us.Отчество, Us.Роль, Us.Пол, Языки.Наименование 'Язык', 
+Em.Наименование 'email', Num.[Номер телефона], Us.Логин, Us.Пароль
+FROM Пользователь Us INNER JOIN Языки ON Us.[ID языка] = Языки.[ID языка]
+LEFT JOIN [Электронная почта] Em
+ON Us.[Id Пользователя] = Em.[Id Пользователя]
+LEFT JOIN [Номера телефонов] Num ON Us.[Id Пользователя] = Num.[Id Пользователя]
+go
+--изменение процедуры AddUser
+ALTER PROCEDURE [AddUser]
+@Login varchar(100), @Password varchar(200), @FirstName varchar(45), @SecondName varchar(45), 
+@Patronymic varchar(45) = NULL, @Sex bit, @Role varchar(45), @Language varchar(45), @Email varchar(45), @PhoneNumber varchar(11)=NULL
 AS
-DECLARE @Date datetime
-SELECT @Date = GETDATE()
-INSERT INTO Медиа(Данные, [Время создания])
-VALUES(@Data,@Date);
-GO
---Корректируем ХП GetArticlesBrief
-ALTER PROCEDURE [GetArticlesBrief]
-@str_id uniqueidentifier
+DECLARE @IdLaguage uniqueidentifier, @UserId uniqueidentifier
+SELECT @IdLaguage = Языки.[ID языка]
+FROM Языки
+WHERE Языки.Наименование = @Language
+SELECT  @UserId=NEWID()
+INSERT INTO [Номера телефонов] VALUES (NEWID(), @PhoneNumber,@UserId)
+INSERT INTO [Электронная почта] VALUES (NEWID(), @Email, @UserId)
+INSERT INTO Пользователь([Id Пользователя], Фамилия, Имя, Отчество, Роль, Пол, [ID языка], Логин, Пароль)
+VALUES(@UserId, @SecondName,@FirstName,@Patronymic,@Role,@Sex,@IdLaguage, @Login, @Password)
+
+go
+--Получение юзера по его логину
+CREATE PROCEDURE [GetUserByLogin] @Login varchar(100)
 AS
-SELECT [Id статьи] FROM [Статьи в страницах]
-WHERE [Id страницы]=@str_id
-GO
---Корректируем представление Menu
-ALTER VIEW Menu AS
-SELECT P1.[Id пункта меню] 'ID', Pr1.Наименование 'Подчинённый', P1.Позиция 'Уровень меню', P1.[Тип меню] 'Тип', 
-P1.[URL] 'Ссылка', P1.[Порядок отображения], P2.[Id пункта меню] 'ID родителя', Pr2.Наименование 'Родитель'
-FROM ([Пункт меню] P1 
-INNER JOIN [Представление меню] Pr1 ON P1.[Id пункта меню] = Pr1.[Id пункта меню])
-LEFT JOIN ([Пункт меню] P2 INNER JOIN [Представление меню] Pr2 ON P2.[Id пункта меню]=Pr2.[Id пункта меню])
-ON P1.[FK_Id пункта меню] = P2.[Id пункта меню]
-GO
+SELECT * FROM UserInfo
+WHERE Логин = @Login
