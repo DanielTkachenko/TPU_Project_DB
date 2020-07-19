@@ -39,17 +39,22 @@ go
 --	fetch next @Count rows only;
 
 --Получение кратких версий статей по ID меню
-CREATE PROCEDURE GetArticlesBriefFromMenu
-@menu_id uniqueidentifier
-AS
-SELECT * FROM [Статья] S1 
-JOIN [Статьи в страницах] SS1 ON S1.[Id статьи]=SS1.[Id статьи] 
-JOIN [Страницы пункты меню] SP1 ON SP1.[Id страницы]=SS1.[Id страницы]
-WHERE SP1.[Id пункта меню]=@menu_id
-GO
---создаем ХП для получения полных версий статей
-CREATE PROCEDURE GetArticlesFull
-@article_id uniqueidentifier
-AS
-SELECT [Id статьи], Название, [Время создания], Тематика, Текст FROM Статья
-WHERE [Id статьи] = @article_id
+--CREATE PROCEDURE GetArticlesBriefFromMenu
+--@menu_id uniqueidentifier
+--AS
+--SELECT * FROM [Статья] S1 
+--JOIN [Статьи в страницах] SS1 ON S1.[Id статьи]=SS1.[Id статьи] 
+--JOIN [Страницы пункты меню] SP1 ON SP1.[Id страницы]=SS1.[Id страницы]
+--WHERE SP1.[Id пункта меню]=@menu_id
+--GO
+----создаем ХП для получения полных версий статей
+--CREATE PROCEDURE GetArticlesFull
+--@article_id uniqueidentifier
+--AS
+--SELECT [Id статьи], Название, [Время создания], Тематика, Текст FROM Статья
+--WHERE [Id статьи] = @article_id
+create procedure GetUserByEmail
+@email varchar(45)
+as
+select * from UserInfo
+where [Электронная почта] = @email
