@@ -194,6 +194,22 @@ CREATE TABLE [Страницы пункты меню]
  [Id страницы] Uniqueidentifier NOT NULL
 )
 go
+--Сообщения
+CREATE TABLE [Текстовки сообщений]
+([ID текста сообщения] uniqueidentifier not null,
+[Текст сообщения] text null,
+PRIMARY KEY([ID текста сообщения])
+)
+GO
+CREATE TABLE [Рассылки]
+([ID сообщения] uniqueidentifier not null,
+[Дата] datetime not null,
+[ID пользователя] uniqueidentifier not null,
+[Статус доставки] varchar(10) not null,
+[ID текста сообщения] uniqueidentifier not null,
+PRIMARY KEY([ID сообщения]),
+FOREIGN KEY([ID текста сообщения]) REFERENCES [Текстовки сообщений]([ID текста сообщения])
+)
 -- Add keys for table Страницы пункты меню
 ALTER TABLE [Страницы пункты меню] ADD CONSTRAINT [PK_Id_пункта_меню_страницы] PRIMARY KEY ([Id пункта меню],[Id страницы])
 go
