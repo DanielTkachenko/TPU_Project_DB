@@ -88,8 +88,14 @@ SET @userid = (SELECT Us.[Id Пользователя]
 FROM [Пользователь] Us JOIN [Электронная почта] Em ON Us.[Id Пользователя] = Em.[Id Пользователя] 
 WHERE Em.Наименование = @email)
 UPDATE [Пользователь]
-SET Пароль = @psw, Имя = @firstName, Фамилия = @secondName, Отчество = @patronymic, Пол = @sex, [ID языка] = @langid
+SET Имя = @firstName, Фамилия = @secondName, Отчество = @patronymic, Пол = @sex, [ID языка] = @langid
 WHERE [Id Пользователя] = @userid;
+IF @psw IS NOT NULL
+BEGIN
+	UPDATE [Пользователь]
+	SET [Пароль] = @psw
+	WHERE [Id Пользователя] = @userid
+END
 IF @phoneNum != NULL
 BEGIN
 	UPDATE [Номера телефонов]
