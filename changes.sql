@@ -1,41 +1,21 @@
 use TPU_Project
 GO
---05.09.20-----------------------------------
-
---fix procedure EditUser
-ALTER PROCEDURE [dbo].[EditUser]
-@email varchar(100), @psw varchar(100), @firstName varchar(50), @lang varchar(20), @secondName varchar(50) = null, @patronymic varchar(50) = null,
-@sex varchar(20) = null, @phoneNum varchar(20) = null
-AS
-DECLARE @langid uniqueidentifier, @userid uniqueidentifier
-SET @langid = (SELECT [ID языка] FROM [Языки] WHERE [Наименование] = @lang)
-SET @userid = (SELECT Us.[Id Пользователя] 
-FROM [Пользователь] Us JOIN [Электронная почта] Em ON Us.[Id Пользователя] = Em.[Id Пользователя] 
-WHERE Em.Наименование = @email)
-UPDATE [Пользователь]
-SET Имя = @firstName, Фамилия = @secondName, Отчество = @patronymic, Пол = @sex, [ID языка] = @langid
-WHERE [Id Пользователя] = @userid;
-IF @psw IS NOT NULL
-BEGIN
-	UPDATE [Пользователь]
-	SET [Пароль] = @psw
-	WHERE [Id Пользователя] = @userid
-END
-IF @phoneNum != NULL
-BEGIN
-	IF EXISTS (SELECT * FROM [Номера телефонов] WHERE [Id Пользователя] = @userid)
-	BEGIN
-		UPDATE [Номера телефонов]
-		SET [Номер телефона] = @phoneNum
-		WHERE [Id Пользователя] = @userid
-	END
-	ELSE
-	BEGIN
-		INSERT INTO [Номера телефонов]([Id Телефона], [Id Пользователя], [Номер телефона])
-		VALUES(NEWID(), @userid, @phoneNum)
-	END
-END
-GO
---ADD UNIQUE TO [НОМЕРА ТЕЛЕФОНОВ]
-ALTER TABLE [НОМЕРА ТЕЛЕФОНОВ]
-ADD UNIQUE([Номер телефона])
+--06.09.20-----------------------------------
+alter table [Рассылки]
+add [ID администратора] uniqueidentifier not null
+go
+alter table [Текстовки сообщений]
+add [Заголовок сообщения] varchar(100) not null
+go
+create procedure [AddNotification]
+@Email varchar(100), @Language varchar(20), @Status varchar(10), @Title varchar(100), @Message text
+as
+declare @textid uniqueidentifier, @adminid uniqueidentifier, @data datetime, @langid uniqueidentifier
+set @textid = NEWID()
+select @adminid = (select [Id Пользователя] from [Электронная почта] where [Наименование] = @Email)
+set @data = GETDATE()
+select @langid = (select [ID языка] from [Языки] where [Наименование] = @Language)
+insert into [Текстовки сообщений]([ID текста сообщения], [Текст сообщения], [Заголовок сообщения])
+values(@textid, @Message, @Title)
+insert into [Рассылки]([ID сообщения], Дата, [ID языка группы рассылки], [Статус доставки], [ID текста сообщения], [ID администратора])
+values(NEWID(), @data, @langid, @Status, @textid, @adminid)
