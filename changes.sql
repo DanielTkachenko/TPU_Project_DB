@@ -4,14 +4,14 @@ GO
 --16.09.20
 CREATE TABLE [Документы]
 ([ID документа] uniqueidentifier not null,
-[Содержимое документа] ntext,
+[Содержимое документа] varbinary,
 [Дата загрузки документа] datetime,
 [Название документа] nvarchar(100) not null,
 [Название файла] nvarchar(100) not null,
 PRIMARY KEY([ID документа]))
 GO
 
-CREATE TABLE [Документа пользователя]
+CREATE TABLE [Документы пользователя]
 ([ID пользователя] uniqueidentifier not null,
 [ID документа] uniqueidentifier not null,
 PRIMARY KEY([ID пользователя], [ID документа]),
@@ -25,7 +25,7 @@ AS
 DECLARE @userid uniqueidentifier
 SELECT @userid = (SELECT [Id Пользователя] FROM [Электронная почта] WHERE [Наименование] = @email)
 SELECT DOC.[ID документа], [Дата загрузки документа], [Название документа], [Название файла]
-FROM [Документа пользователя] UD JOIN [Документы] DOC ON UD.[ID документа] = DOC.[ID документа]
+FROM [Документы пользователя] UD JOIN [Документы] DOC ON UD.[ID документа] = DOC.[ID документа]
 WHERE [ID пользователя] = @userid
 ORDER BY [Дата загрузки документа] DESC
 go
@@ -42,12 +42,14 @@ CREATE TABLE [Идентификатор учебной группы]
 PRIMARY KEY([ID группы]))
 go
 
-CREATE PROCEDURE GetUtilParameter
-@key nvarchar(500)
+ALTER PROCEDURE GetUtilParameter
+@key nvarchar(500),
+@parameter nvarchar(500) OUTPUT
 AS
-SELECT [Значение] FROM [Служебные данные]
+SELECT @parameter = [Значение] FROM [Служебные данные]
 WHERE [Параметр] = @key
 go
+
 --корректируем ХП и таблицы связанные с пользователем / добавляем номер группы
 
 
@@ -119,3 +121,23 @@ LEFT JOIN [Электронная почта] Em
 ON Us.[Id Пользователя] = Em.[Id Пользователя]
 LEFT JOIN [Номера телефонов] Num ON Us.[Id Пользователя] = Num.[Id Пользователя]
 go
+
+----------
+CREATE PROCEDURE GetUserGroupID
+@email varchar(100), @internalGroupID varchar(100) OUTPUT
+AS
+DECLARE @groupid uniqueidentifier
+SET @groupid = (SELECT Us.[ID группы] FROM [Электронная почта] Em JOIN [Пользователь]Us ON Em.[Id пользователя] = Us.[Id Пользователя]  
+WHERE Em.[Наименование] = @email)
+SELECT @internalGroupID = (SELECT [Идентификатор группы] FROM [Идентификатор учебной группы] WHERE [ID группы] = @groupid)
+GO
+
+CREATE PROCEDURE GetDocumentsWithContent
+@email varchar(100)
+AS
+DECLARE @userid uniqueidentifier
+SELECT @userid = (SELECT [Id Пользователя] FROM [Электронная почта] WHERE [Наименование] = @email)
+SELECT *
+FROM [Документы пользователя] UD JOIN [Документы] DOC ON UD.[ID документа] = DOC.[ID документа]
+WHERE [ID пользователя] = @userid
+ORDER BY [Дата загрузки документа] DESC
