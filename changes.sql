@@ -1,21 +1,35 @@
 use TPU_Project
 GO
---06.09.20-----------------------------------
-alter table [Рассылки]
-add [ID администратора] uniqueidentifier not null
+
+11.09.20
+CREATE TABLE [Пользователь сброс пароля]
+([ID пользователя] uniqueidentifier not null,
+[Токен для сброса] varchar(100) not null,
+[Время добавления] datetime not null,
+foreign key([ID пользователя]) references Пользователь([Id Пользователя]),
+primary key([ID пользователя], [Токен для сброса]))
+
 go
-alter table [Текстовки сообщений]
-add [Заголовок сообщения] varchar(100) not null
-go
-create procedure [AddNotification]
-@Email varchar(100), @Language varchar(20), @Status varchar(10), @Title varchar(100), @Message text
-as
-declare @textid uniqueidentifier, @adminid uniqueidentifier, @data datetime, @langid uniqueidentifier
-set @textid = NEWID()
-select @adminid = (select [Id Пользователя] from [Электронная почта] where [Наименование] = @Email)
-set @data = GETDATE()
-select @langid = (select [ID языка] from [Языки] where [Наименование] = @Language)
-insert into [Текстовки сообщений]([ID текста сообщения], [Текст сообщения], [Заголовок сообщения])
-values(@textid, @Message, @Title)
-insert into [Рассылки]([ID сообщения], Дата, [ID языка группы рассылки], [Статус доставки], [ID текста сообщения], [ID администратора])
-values(NEWID(), @data, @langid, @Status, @textid, @adminid)
+
+CREATE PROCEDURE [EditPasswordUser]
+@email varchar(100), @newPassword varchar(100), @token varchar(100)
+AS
+DECLARE @userid uniqueidentifier
+SELECT @userid = (SELECT [Id Пользователя] FROM [Электронная почта] WHERE [Наименование] = @email)
+IF EXISTS (SELECT * FROM [Пользователь сброс пароля] WHERE [ID пользователя] = @userid AND [Токен для сброса] = @token)
+BEGIN
+	UPDATE Пользователь
+	SET Пароль = @newPassword
+	WHERE [Id Пользователя] = @userid
+END
+RETURN @@ROWCOUNT
+
+GO
+
+CREATE PROCEDURE AddResetPasswordRequest
+@email varchar(100), @token varchar(100)
+AS
+DECLARE @userid uniqueidentifier
+SELECT @userid = (SELECT [Id Пользователя] FROM [Электронная почта] WHERE [Наименование] = @email)
+INSERT INTO [Пользователь сброс пароля]([ID пользователя], [Токен для сброса], [Время добавления])
+VALUES(@userid, @token, GETDATE())
